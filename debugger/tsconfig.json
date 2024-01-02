@@ -3,9 +3,9 @@
     {
         "target": "es6",
         "strict": true,
-        "keyofStringsOnly": true,
+        // "keyofStringsOnly": true,
         "typeRoots": [],
-        "types": ["typescript-to-lua/language-extensions"],
+        // "types": ["typescript-to-lua/language-extensions"],
         "noLib": true,
         "sourceMap": true,
         "rootDir": ".",
@@ -13,7 +13,7 @@
     },
     "include": [
         "./**/*.ts"
-    ],
+, "language-extensions.d.ts"    ],
     "tstl":
     {
         "luaTarget": "5.1",

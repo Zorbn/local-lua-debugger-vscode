@@ -392,7 +392,7 @@ export namespace Debugger {
         level: number,
         info: debug.FunctionInfo,
         thread?: Thread
-    ): LuaMultiReturn<[true, ...unknown[]] | [false, string]> {
+    ): LuaMultiReturn<[boolean, ...unknown[]]> {
         if (thread === mainThreadName) {
             return $multi(false, "unable to access main thread while running in a coroutine");
         }
@@ -750,7 +750,7 @@ export namespace Debugger {
                     if (results[0]) {
                         Send.result(...unpack(results, 2));
                     } else {
-                        Send.error(results[1]);
+                        Send.error(results[1] as string);
                     }
                 }
 
@@ -799,7 +799,7 @@ export namespace Debugger {
                     if (results[0]) {
                         Send.result(...unpack(results, 2));
                     } else {
-                        Send.error(results[1]);
+                        Send.error(results[1] as string);
                     }
                 }
 

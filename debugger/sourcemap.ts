@@ -284,7 +284,7 @@ export namespace SourceMap {
             if (sourceMap !== false) {
                 for (const source of sourceMap.sources) {
                     if (source === sourceFile) {
-                        return $multi(scriptFile, sourceMap);
+                        return $multi(scriptFile, sourceMap) as LuaMultiReturn<[string, SourceMap]>;
                     }
                 }
             }

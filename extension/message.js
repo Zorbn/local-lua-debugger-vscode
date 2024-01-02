@@ -75,5 +75,5 @@ var Message;
         return [messages, processed.join(""), text.substring(position)];
     }
     Message.parse = parse;
-})(Message = exports.Message || (exports.Message = {}));
+})(Message || (exports.Message = Message = {}));
 //# sourceMappingURL=message.js.map

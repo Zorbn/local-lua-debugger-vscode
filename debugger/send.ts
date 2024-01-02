@@ -142,7 +142,7 @@ export namespace Send {
             variables: Format.makeExplicitArray()
         };
         for (const [name, info] of pairs(varsObj)) {
-            const dbgVar = name === "..." ? buildVarArgs(name, info.val as unknown[]) : buildVariable(name, info.val);
+            const dbgVar = name === "..." ? buildVarArgs(name, info.val as unknown[]) : buildVariable(name as string, info.val);
             table.insert(dbgVariables.variables, dbgVar);
         }
         send(dbgVariables);

@@ -108,7 +108,7 @@ class LuaDebugSession extends vscode_debugadapter_1.LoggingDebugSession {
         this.debugPipe = null;
         this.outputText = "";
         this.messageHandlerQueue = [];
-        this.variableHandles = new vscode_debugadapter_1.Handles(3 /* Global */ + 1);
+        this.variableHandles = new vscode_debugadapter_1.Handles(3 /* ScopeType.Global */ + 1);
         this.breakpointsPending = false;
         this.pendingScripts = null;
         this.pendingIgnorePatterns = null;
@@ -120,7 +120,7 @@ class LuaDebugSession extends vscode_debugadapter_1.LoggingDebugSession {
         this.usePipeCommutication = false;
     }
     initializeRequest(response, args) {
-        this.showOutput("initializeRequest", "request" /* Request */);
+        this.showOutput("initializeRequest", "request" /* OutputCategory.Request */);
         if (typeof response.body === "undefined") {
             response.body = {};
         }
@@ -133,7 +133,7 @@ class LuaDebugSession extends vscode_debugadapter_1.LoggingDebugSession {
         this.sendEvent(new vscode_debugadapter_1.InitializedEvent());
     }
     configurationDoneRequest(response, args) {
-        this.showOutput("configurationDoneRequest", "request" /* Request */);
+        this.showOutput("configurationDoneRequest", "request" /* OutputCategory.Request */);
         super.configurationDoneRequest(response, args);
         if (typeof this.onConfigurationDone !== "undefined") {
             this.onConfigurationDone();
@@ -144,7 +144,7 @@ class LuaDebugSession extends vscode_debugadapter_1.LoggingDebugSession {
         return __awaiter(this, void 0, void 0, function* () {
             this.config = args;
             this.autoContinueNext = this.config.stopOnEntry !== true;
-            this.showOutput("launchRequest", "request" /* Request */);
+            this.showOutput("launchRequest", "request" /* OutputCategory.Request */);
             yield this.waitForConfiguration();
             if (this.config.scriptFiles) {
                 this.pendingScripts = this.config.scriptFiles;
@@ -196,13 +196,13 @@ class LuaDebugSession extends vscode_debugadapter_1.LoggingDebugSession {
                     this.debugPipe = (0, debugPipe_1.createFifoPipe)();
                 }
                 if (this.usePipeCommutication) {
-                    this.debugPipe.open(data => { void this.onDebuggerOutput(data); }, err => { this.showOutput(`${err}`, "error" /* Error */); });
+                    this.debugPipe.open(data => { void this.onDebuggerOutput(data); }, err => { this.showOutput(`${err}`, "error" /* OutputCategory.Error */); });
                     processOptions.env[outputFileEnv] = this.debugPipe.getOutputPipePath();
                     processOptions.env[inputFileEnv] = this.debugPipe.getInputPipePath();
                 }
             }
             if (this.pullBreakpointsSupport) {
-                (_a = this.debugPipe) === null || _a === void 0 ? void 0 : _a.openPull(err => { this.showOutput(`${err}`, "error" /* Error */); });
+                (_a = this.debugPipe) === null || _a === void 0 ? void 0 : _a.openPull(err => { this.showOutput(`${err}`, "error" /* OutputCategory.Error */); });
                 processOptions.env[pullFileEnv] = (_b = this.debugPipe) === null || _b === void 0 ? void 0 : _b.getPullPipePath();
             }
             //Append lua path so it can find debugger script
@@ -232,29 +232,29 @@ class LuaDebugSession extends vscode_debugadapter_1.LoggingDebugSession {
                 ];
             }
             this.process = childProcess.spawn(processExecutable, processArgs, processOptions);
-            this.showOutput(`launching \`${processExecutable} ${processArgs.join(" ")}\` from "${cwd}"`, "info" /* Info */);
+            this.showOutput(`launching \`${processExecutable} ${processArgs.join(" ")}\` from "${cwd}"`, "info" /* OutputCategory.Info */);
             //Process callbacks
             if (this.usePipeCommutication) {
-                this.assert(this.process.stdout).on("data", data => { this.showOutput(`${data}`, "stdout" /* StdOut */); });
+                this.assert(this.process.stdout).on("data", data => { this.showOutput(`${data}`, "stdout" /* OutputCategory.StdOut */); });
             }
             else {
                 this.assert(this.process.stdout).on("data", data => { void this.onDebuggerOutput(data); });
             }
-            this.assert(this.process.stderr).on("data", data => { this.showOutput(`${data}`, "stderr" /* StdErr */); });
+            this.assert(this.process.stderr).on("data", data => { this.showOutput(`${data}`, "stderr" /* OutputCategory.StdErr */); });
             this.process.on("close", (code, signal) => this.onDebuggerTerminated(`${code !== null ? code : signal}`));
             this.process.on("disconnect", () => this.onDebuggerTerminated("disconnected"));
-            this.process.on("error", err => this.onDebuggerTerminated(`Failed to launch \`${processExecutable} ${processArgs.join(" ")}\` from "${cwd}": ${err}`, "error" /* Error */));
+            this.process.on("error", err => this.onDebuggerTerminated(`Failed to launch \`${processExecutable} ${processArgs.join(" ")}\` from "${cwd}": ${err}`, "error" /* OutputCategory.Error */));
             this.process.on("exit", (code, signal) => this.onDebuggerTerminated(`${code !== null ? code : signal}`));
             this.isRunning = true;
             this.inDebuggerBreakpoint = false;
-            this.showOutput("process launched", "info" /* Info */);
+            this.showOutput("process launched", "info" /* OutputCategory.Info */);
             this.sendResponse(response);
         });
     }
     setBreakPointsRequest(response, args) {
         var _a, _b;
         return __awaiter(this, void 0, void 0, function* () {
-            this.showOutput("setBreakPointsRequest", "request" /* Request */);
+            this.showOutput("setBreakPointsRequest", "request" /* OutputCategory.Request */);
             const filePath = args.source.path;
             if (this.process !== null && !this.isRunning) {
                 if (!this.inDebuggerBreakpoint && this.pullBreakpointsSupport) {
@@ -294,7 +294,7 @@ class LuaDebugSession extends vscode_debugadapter_1.LoggingDebugSession {
     }
     threadsRequest(response) {
         return __awaiter(this, void 0, void 0, function* () {
-            this.showOutput("threadsRequest", "request" /* Request */);
+            this.showOutput("threadsRequest", "request" /* OutputCategory.Request */);
             const msg = yield this.waitForCommandResponse("threads");
             if (msg.type === "threads") {
                 //Remove dead threads
@@ -320,7 +320,7 @@ class LuaDebugSession extends vscode_debugadapter_1.LoggingDebugSession {
     }
     stackTraceRequest(response, args) {
         return __awaiter(this, void 0, void 0, function* () {
-            this.showOutput(`stackTraceRequest ${args.startFrame}/${args.levels} (thread ${args.threadId})`, "request" /* Request */);
+            this.showOutput(`stackTraceRequest ${args.startFrame}/${args.levels} (thread ${args.threadId})`, "request" /* OutputCategory.Request */);
             const msg = yield this.waitForCommandResponse(`thread ${args.threadId}`);
             const startFrame = typeof args.startFrame !== "undefined" ? args.startFrame : 0;
             const maxLevels = typeof args.levels !== "undefined" ? args.levels : maxStackCount;
@@ -366,14 +366,14 @@ class LuaDebugSession extends vscode_debugadapter_1.LoggingDebugSession {
     }
     scopesRequest(response, args) {
         return __awaiter(this, void 0, void 0, function* () {
-            this.showOutput("scopesRequest", "request" /* Request */);
+            this.showOutput("scopesRequest", "request" /* OutputCategory.Request */);
             const { threadId, frame } = parseFrameId(args.frameId);
             yield this.waitForCommandResponse(`thread ${threadId}`);
             yield this.waitForCommandResponse(`frame ${frame}`);
             const scopes = [
-                new vscode_debugadapter_1.Scope("Locals", 1 /* Local */, false),
-                new vscode_debugadapter_1.Scope("Upvalues", 2 /* Upvalue */, false),
-                new vscode_debugadapter_1.Scope("Globals", 3 /* Global */, false)
+                new vscode_debugadapter_1.Scope("Locals", 1 /* ScopeType.Local */, false),
+                new vscode_debugadapter_1.Scope("Upvalues", 2 /* ScopeType.Upvalue */, false),
+                new vscode_debugadapter_1.Scope("Globals", 3 /* ScopeType.Global */, false)
             ];
             response.body = { scopes };
             this.sendResponse(response);
@@ -385,17 +385,17 @@ class LuaDebugSession extends vscode_debugadapter_1.LoggingDebugSession {
             let baseName;
             let isMultiResult = false;
             switch (args.variablesReference) {
-                case 1 /* Local */:
+                case 1 /* ScopeType.Local */:
                     cmd = "locals";
-                    this.showOutput("variablesRequest locals", "request" /* Request */);
+                    this.showOutput("variablesRequest locals", "request" /* OutputCategory.Request */);
                     break;
-                case 2 /* Upvalue */:
+                case 2 /* ScopeType.Upvalue */:
                     cmd = "ups";
-                    this.showOutput("variablesRequest ups", "request" /* Request */);
+                    this.showOutput("variablesRequest ups", "request" /* OutputCategory.Request */);
                     break;
-                case 3 /* Global */:
+                case 3 /* ScopeType.Global */:
                     cmd = "globals";
-                    this.showOutput("variablesRequest globals", "request" /* Request */);
+                    this.showOutput("variablesRequest globals", "request" /* OutputCategory.Request */);
                     break;
                 default:
                     baseName = this.assert(this.variableHandles.get(args.variablesReference));
@@ -418,7 +418,7 @@ class LuaDebugSession extends vscode_debugadapter_1.LoggingDebugSession {
                     else {
                         cmd += " all";
                     }
-                    this.showOutput(`variablesRequest ${baseName} ${args.filter} ${args.start}/${args.count}`, "request" /* Request */);
+                    this.showOutput(`variablesRequest ${baseName} ${args.filter} ${args.start}/${args.count}`, "request" /* OutputCategory.Request */);
                     break;
             }
             const vars = yield this.waitForCommandResponse(cmd);
@@ -455,7 +455,7 @@ class LuaDebugSession extends vscode_debugadapter_1.LoggingDebugSession {
         });
     }
     continueRequest(response, args) {
-        this.showOutput("continueRequest", "request" /* Request */);
+        this.showOutput("continueRequest", "request" /* OutputCategory.Request */);
         if (this.sendCommand("cont")) {
             this.variableHandles.reset();
             this.isRunning = true;
@@ -467,7 +467,7 @@ class LuaDebugSession extends vscode_debugadapter_1.LoggingDebugSession {
         this.sendResponse(response);
     }
     nextRequest(response, args) {
-        this.showOutput("nextRequest", "request" /* Request */);
+        this.showOutput("nextRequest", "request" /* OutputCategory.Request */);
         if (this.sendCommand("step")) {
             this.variableHandles.reset();
             this.isRunning = true;
@@ -479,7 +479,7 @@ class LuaDebugSession extends vscode_debugadapter_1.LoggingDebugSession {
         this.sendResponse(response);
     }
     stepInRequest(response, args) {
-        this.showOutput("stepInRequest", "request" /* Request */);
+        this.showOutput("stepInRequest", "request" /* OutputCategory.Request */);
         if (this.sendCommand("stepin")) {
             this.variableHandles.reset();
             this.isRunning = true;
@@ -491,7 +491,7 @@ class LuaDebugSession extends vscode_debugadapter_1.LoggingDebugSession {
         this.sendResponse(response);
     }
     stepOutRequest(response, args) {
-        this.showOutput("stepOutRequest", "request" /* Request */);
+        this.showOutput("stepOutRequest", "request" /* OutputCategory.Request */);
         if (this.sendCommand("stepout")) {
             this.variableHandles.reset();
             this.isRunning = true;
@@ -505,31 +505,31 @@ class LuaDebugSession extends vscode_debugadapter_1.LoggingDebugSession {
     setVariableRequest(response, args) {
         return __awaiter(this, void 0, void 0, function* () {
             let msg;
-            if (args.variablesReference === 3 /* Global */
-                || args.variablesReference === 1 /* Local */
-                || args.variablesReference === 2 /* Upvalue */) {
-                this.showOutput(`setVariableRequest ${args.name} = ${args.value}`, "request" /* Request */);
+            if (args.variablesReference === 3 /* ScopeType.Global */
+                || args.variablesReference === 1 /* ScopeType.Local */
+                || args.variablesReference === 2 /* ScopeType.Upvalue */) {
+                this.showOutput(`setVariableRequest ${args.name} = ${args.value}`, "request" /* OutputCategory.Request */);
                 msg = yield this.waitForCommandResponse(`exec ${args.name} = ${args.value}; return ${args.name}`);
             }
             else if (args.name === metatableDisplayName) {
                 const name = this.variableHandles.get(args.variablesReference);
-                this.showOutput(`setVariableRequest ${name}[[metatable]] = ${args.value}`, "request" /* Request */);
+                this.showOutput(`setVariableRequest ${name}[[metatable]] = ${args.value}`, "request" /* OutputCategory.Request */);
                 msg = yield this.waitForCommandResponse(`eval setmetatable(${name}, ${args.value})`);
             }
             else if (args.name === tableLengthDisplayName) {
                 const name = this.variableHandles.get(args.variablesReference);
-                this.showOutput(`setVariableRequest ${name}[[length]] = ${args.value}`, "request" /* Request */);
+                this.showOutput(`setVariableRequest ${name}[[length]] = ${args.value}`, "request" /* OutputCategory.Request */);
                 msg = yield this.waitForCommandResponse(`eval #${name}`);
             }
             else {
                 const name = `${this.variableHandles.get(args.variablesReference)}[${args.name}]`;
-                this.showOutput(`setVariableRequest ${name} = ${args.value}`, "request" /* Request */);
+                this.showOutput(`setVariableRequest ${name} = ${args.value}`, "request" /* OutputCategory.Request */);
                 msg = yield this.waitForCommandResponse(`exec ${name} = ${args.value}; return ${name}`);
             }
             const result = this.handleEvaluationResult(args.value, msg);
             if (!result.success) {
                 if (typeof result.error !== "undefined") {
-                    this.showOutput(result.error, "error" /* Error */);
+                    this.showOutput(result.error, "error" /* OutputCategory.Error */);
                 }
                 response.success = false;
             }
@@ -542,7 +542,7 @@ class LuaDebugSession extends vscode_debugadapter_1.LoggingDebugSession {
     evaluateRequest(response, args) {
         return __awaiter(this, void 0, void 0, function* () {
             const expression = args.expression;
-            this.showOutput(`evaluateRequest ${expression}`, "request" /* Request */);
+            this.showOutput(`evaluateRequest ${expression}`, "request" /* OutputCategory.Request */);
             if (typeof args.frameId !== "undefined") {
                 const { threadId, frame } = parseFrameId(args.frameId);
                 yield this.waitForCommandResponse(`thread ${threadId}`);
@@ -553,7 +553,7 @@ class LuaDebugSession extends vscode_debugadapter_1.LoggingDebugSession {
             if (!result.success) {
                 if (typeof result.error !== "undefined" && args.context !== "hover") {
                     if (args.context !== "watch") {
-                        this.showOutput(result.error, "error" /* Error */);
+                        this.showOutput(result.error, "error" /* OutputCategory.Error */);
                     }
                     response.success = false;
                     response.message = result.error;
@@ -566,7 +566,7 @@ class LuaDebugSession extends vscode_debugadapter_1.LoggingDebugSession {
         });
     }
     terminateRequest(response, args) {
-        this.showOutput("terminateRequest", "request" /* Request */);
+        this.showOutput("terminateRequest", "request" /* OutputCategory.Request */);
         if (this.process !== null) {
             if (process.platform === "win32") {
                 childProcess.spawn("taskkill", ["/pid", this.assert(this.process.pid).toString(), "/f", "/t"]);
@@ -713,12 +713,12 @@ class LuaDebugSession extends vscode_debugadapter_1.LoggingDebugSession {
                     if (resultMsg.type === "result") {
                         for (const result of resultMsg.results) {
                             if (typeof result.value !== "undefined") {
-                                this.showOutput(this.getValueString(result), "info" /* Info */);
+                                this.showOutput(this.getValueString(result), "info" /* OutputCategory.Info */);
                             }
                         }
                     }
                     else if (resultMsg.type === "error") {
-                        this.showOutput(resultMsg.error, "error" /* Error */);
+                        this.showOutput(resultMsg.error, "error" /* OutputCategory.Error */);
                     }
                 }
                 this.pendingScripts = null;
@@ -729,12 +729,12 @@ class LuaDebugSession extends vscode_debugadapter_1.LoggingDebugSession {
                     if (resultMsg.type === "result") {
                         for (const result of resultMsg.results) {
                             if (typeof result.value !== "undefined") {
-                                this.showOutput(this.getValueString(result), "info" /* Info */);
+                                this.showOutput(this.getValueString(result), "info" /* OutputCategory.Info */);
                             }
                         }
                     }
                     else if (resultMsg.type === "error") {
-                        this.showOutput(resultMsg.error, "error" /* Error */);
+                        this.showOutput(resultMsg.error, "error" /* OutputCategory.Error */);
                     }
                 }
                 this.pendingIgnorePatterns = null;
@@ -750,7 +750,7 @@ class LuaDebugSession extends vscode_debugadapter_1.LoggingDebugSession {
                 }
             }
             if (msg.breakType === "error") {
-                this.showOutput(msg.message, "error" /* Error */);
+                this.showOutput(msg.message, "error" /* OutputCategory.Error */);
                 const evt = new vscode_debugadapter_1.StoppedEvent("exception", msg.threadId, msg.message);
                 evt.body.allThreadsStopped = true;
                 this.sendEvent(evt);
@@ -780,7 +780,7 @@ class LuaDebugSession extends vscode_debugadapter_1.LoggingDebugSession {
             const [messages, processed, unprocessed] = message_1.Message.parse(this.outputText);
             let debugBreak;
             for (const msg of messages) {
-                this.showOutput(JSON.stringify(msg), "message" /* Message */);
+                this.showOutput(JSON.stringify(msg), "message" /* OutputCategory.Message */);
                 if (msg.type === "debugBreak") {
                     debugBreak = msg;
                 }
@@ -788,14 +788,14 @@ class LuaDebugSession extends vscode_debugadapter_1.LoggingDebugSession {
                     this.handleDebugMessage(msg);
                 }
             }
-            this.showOutput(processed, "stdout" /* StdOut */);
+            this.showOutput(processed, "stdout" /* OutputCategory.StdOut */);
             this.outputText = unprocessed;
             if (typeof debugBreak !== "undefined") {
                 yield this.onDebuggerStop(debugBreak);
             }
         });
     }
-    onDebuggerTerminated(result, category = "info" /* Info */) {
+    onDebuggerTerminated(result, category = "info" /* OutputCategory.Info */) {
         if (this.process === null) {
             return;
         }
@@ -807,7 +807,7 @@ class LuaDebugSession extends vscode_debugadapter_1.LoggingDebugSession {
         this.isRunning = false;
         this.inDebuggerBreakpoint = false;
         if (this.outputText.length > 0) {
-            this.showOutput(this.outputText, "stdout" /* StdOut */);
+            this.showOutput(this.outputText, "stdout" /* OutputCategory.StdOut */);
             this.outputText = "";
         }
         this.showOutput(`debugging ended: ${result}`, category);
@@ -818,7 +818,7 @@ class LuaDebugSession extends vscode_debugadapter_1.LoggingDebugSession {
         if (this.process === null || this.isRunning) {
             return false;
         }
-        this.showOutput(cmd, "command" /* Command */);
+        this.showOutput(cmd, "command" /* OutputCategory.Command */);
         if (this.usePipeCommutication) {
             (_a = this.debugPipe) === null || _a === void 0 ? void 0 : _a.write(`${cmd}\n`);
         }
@@ -841,10 +841,10 @@ class LuaDebugSession extends vscode_debugadapter_1.LoggingDebugSession {
         if (msg.length === 0) {
             return;
         }
-        else if (category === "stdout" /* StdOut */ || category === "stderr" /* StdErr */) {
+        else if (category === "stdout" /* OutputCategory.StdOut */ || category === "stderr" /* OutputCategory.StdErr */) {
             this.sendEvent(new vscode_debugadapter_1.OutputEvent(msg, category));
         }
-        else if (category === "error" /* Error */) {
+        else if (category === "error" /* OutputCategory.Error */) {
             this.sendEvent(new vscode_debugadapter_1.OutputEvent(`\n[${category}] ${msg}\n`, "stderr"));
         }
         else if (typeof this.config !== "undefined" && this.config.verbose === true) {
